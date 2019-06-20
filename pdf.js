@@ -16,8 +16,7 @@ export async function getPDF(docOptions) {
         ids: new Set(),
         map: new Map(),
     }
-    var i = 1;
-    for (i = 1; i <= pdfDocument.numPages; i++) {
+    for (let i = 1; i <= pdfDocument.numPages; i++) {
         console.log("getting page")
         const page = await pdfDocument.getPage(i)
         const scale = 1.0
