@@ -7,11 +7,13 @@ import "core-js/stable";
 import "regenerator-runtime/runtime";
 
 const fs = require('fs');
+const PropTypes = require('prop-types');
 const path = require('path')
 
 class SearchQuery extends React.Component {
     constructor() {
         super();
+        PropTypes.showCursor = true;
  
         this.state = {
             query: ''
@@ -24,7 +26,7 @@ class SearchQuery extends React.Component {
         return (
             <Box>
                 <Box marginRight={1}>
-                    Enter file path:
+                    Please input your folder path and output path separated by a single space:
                 </Box>
  
                 <TextInput
@@ -40,29 +42,38 @@ class SearchQuery extends React.Component {
         this.setState({query});
     }
 
-    async handleSubmit(query) {
+    handleSubmit(query) {
         console.log(query);
-        const folderPath = query;
-        //passing directoryPath and callback function
-        // fs.readdir(folderPath, function (err, files) {
-        //     console.log(files.length)
-        //     //handling error
-        //     if (err) {
-        //         return console.log('Unable to scan directory: ' + err);
-        //     } 
-        // })
-        const data = fs.readFileSync(query)
-        const {fonts, metadata, pages, pdfDocument} = await getPDF(data)
-        console.log(fonts)
-        const transformations = makeTransformations(fonts.map)
-        const parseResult = transform(pages, transformations)
-        const text = parseResult.pages
-            .map(page => page.items.join('\n') + '\n')
-            .join('')
-        const outputPath = "./output/output.md"
-        console.log(`Writing to ${outputPath}...`)
-        fs.writeFileSync(path.resolve(outputPath), text)
-        console.log('Done.')
+        var paths = query.split(' ');
+        if (paths.length != 2) {
+            query = "";
+        } else {
+            //passing directoryPath and callback function
+            console.log(paths)
+            var files = fs.readdirSync(paths[0])
+            var filePaths = []
+
+            files.forEach(file => {
+                if (file.split('.').pop() == 'pdf') {
+                    filePaths.push(paths[0] + '/' + file)
+                }
+            });
+            
+            filePaths.forEach(async function(filePath, i) {
+                const data = fs.readFileSync(filePath)
+                const {fonts, metadata, pages, pdfDocument} = await getPDF(data)
+                console.log(fonts)
+                const transformations = makeTransformations(fonts.map)
+                const parseResult = transform(pages, transformations)
+                const text = parseResult.pages
+                    .map(page => page.items.join('\n') + '\n')
+                    .join('')
+                const outputPath = "./output/output" + i + ".md"
+                console.log(`Writing to ${outputPath}...`)
+                fs.writeFileSync(path.resolve(outputPath), text)
+                console.log('Done.')
+            })
+        }
     }
 }
  
