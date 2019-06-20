@@ -1,35 +1,10 @@
 import pdfjs from 'pdfjs-dist';
-import Page from './models/Page.js';
-import TextItem from './models/TextItem.js'
+import Page from './models/Page.jsx';
+import TextItem from './models/TextItem.jsx'
 import "core-js/stable";
 import "regenerator-runtime/runtime";
 
-var CountdownLatch = function (limit){
-    this.limit = limit;
-    this.count = 0;
-    this.waitBlock = function (){};
-};
-
-CountdownLatch.prototype.countDown = function (){
-    this.count = this.count + 1;
-    if(this.limit <= this.count){
-        return this.waitBlock();
-    }
-};
-
-CountdownLatch.prototype.await = function(callback){
-    this.waitBlock = callback;
-};
-
-var barrier = new CountdownLatch(1);
-
-export async function getPDF(fileBuffer) {
-    let docOptions = {
-        data: fileBuffer,
-        // cMapUrl: './node_modules/pdfjs-dist/cmaps/',
-        cMapUrl: 'cmaps/',
-        cMapPacked: true,
-    }
+export async function getPDF(docOptions) {
     const pdfDocument = await pdfjs.getDocument(docOptions);
     // console.log(pdfDocument._transport);
     const metadata = await pdfDocument.getMetadata();
@@ -41,25 +16,25 @@ export async function getPDF(fileBuffer) {
         ids: new Set(),
         map: new Map(),
     }
-    console.log("fonts1");
-    console.log(fonts);
-    for (let i = 1; i <= pdfDocument.numPages; i++) {
+    var i = 1;
+    for (i = 1; i <= pdfDocument.numPages; i++) {
+        console.log("getting page")
         const page = await pdfDocument.getPage(i)
         const scale = 1.0
         const viewport = page.getViewport(scale)
+        console.log("getting pagetextcontent")
         const textContent = await page.getTextContent()
         // console.log(pdfDocument._transport.commonObjs);
         const textItems = await textContent.items.map(item => {
             const fontId = item.fontName
-
             if (!fonts.ids.has(fontId) && fontId.startsWith('g_d0')) {
                 pdfDocument._transport.commonObjs.get(fontId, font => {
                     if (!fonts.ids.has(fontId)) {
                         fonts.ids.add(fontId)
                         fonts.map.set(fontId, font)
                     }
+                    // console.log("fonts inside if")
                 })
-                barrier.countDown();
             }
 
             const tx = pdfjs.Util.transform(
@@ -78,7 +53,7 @@ export async function getPDF(fileBuffer) {
                 font: fontId,
             })
         })
-        console.log("fonts out");
+        console.log("fonts out" + i.toString());
         console.log(fonts)
         pages[page.pageIndex].items = textItems
         // Verify that the number of page items for each page correspond
@@ -93,11 +68,7 @@ export async function getPDF(fileBuffer) {
     // console.log(metadata);
     console.log("fonts final");
     console.log(fonts);
-    barrier.await(function() {
-        console.log("hi");
-        console.log(fonts);
-        return { fonts, metadata, pages, pdfDocument };
-    })
+    return { fonts, metadata, pages, pdfDocument };
 } 
 
 // What the above function is actually doing

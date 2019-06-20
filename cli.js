@@ -2,10 +2,12 @@ import React from 'react';
 import {render, Box} from 'ink';
 import TextInput from 'ink-text-input';
 import { getPDF } from './pdf.js';
+import { makeTransformations, transform } from './lib/transformations.jsx';
 import "core-js/stable";
 import "regenerator-runtime/runtime";
 
 const fs = require('fs');
+const path = require('path')
 
 class SearchQuery extends React.Component {
     constructor() {
@@ -22,7 +24,7 @@ class SearchQuery extends React.Component {
         return (
             <Box>
                 <Box marginRight={1}>
-                    Enter your query:
+                    Enter file path:
                 </Box>
  
                 <TextInput
@@ -38,10 +40,10 @@ class SearchQuery extends React.Component {
         this.setState({query});
     }
 
-    handleSubmit(query) {
+    async handleSubmit(query) {
         console.log(query);
         const folderPath = query;
-        //passsing directoryPath and callback function
+        //passing directoryPath and callback function
         // fs.readdir(folderPath, function (err, files) {
         //     console.log(files.length)
         //     //handling error
@@ -49,14 +51,18 @@ class SearchQuery extends React.Component {
         //         return console.log('Unable to scan directory: ' + err);
         //     } 
         // })
-        fs.readFile(query, function read(err, data) {
-            if (err) {
-                throw err;
-            }
-            getPDF(data).then(function(stuff) {
-                console.log(stuff);
-            })
-        });
+        const data = fs.readFileSync(query)
+        const {fonts, metadata, pages, pdfDocument} = await getPDF(data)
+        console.log(fonts)
+        const transformations = makeTransformations(fonts.map)
+        const parseResult = transform(pages, transformations)
+        const text = parseResult.pages
+            .map(page => page.items.join('\n') + '\n')
+            .join('')
+        const outputPath = "./output/output.md"
+        console.log(`Writing to ${outputPath}...`)
+        fs.writeFileSync(path.resolve(outputPath), text)
+        console.log('Done.')
     }
 }
  
