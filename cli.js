@@ -62,7 +62,7 @@ class SearchQuery extends React.Component {
             filePaths.forEach(async function(filePath, i) {
                 const data = fs.readFileSync(filePath)
                 const {fonts, metadata, pages, pdfDocument} = await getPDF(data)
-                console.log(fonts)
+                // console.log(fonts)
                 const transformations = makeTransformations(fonts.map)
                 const parseResult = transform(pages, transformations)
                 const text = parseResult.pages

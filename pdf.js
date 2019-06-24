@@ -1,6 +1,6 @@
 import pdfjs from 'pdfjs-dist';
 import Page from './models/Page.jsx';
-import TextItem from './models/TextItem.jsx'
+import TextItem from './models/TextItem.jsx';
 import "core-js/stable";
 import "regenerator-runtime/runtime";
 
@@ -16,23 +16,27 @@ export async function getPDF(docOptions) {
         ids: new Set(),
         map: new Map(),
     }
+    var countDown = pdfDocument.numPages
     for (let i = 1; i <= pdfDocument.numPages; i++) {
-        console.log("getting page")
+        // console.log("getting page")
         const page = await pdfDocument.getPage(i)
         const scale = 1.0
         const viewport = page.getViewport(scale)
-        console.log("getting pagetextcontent")
+        // console.log("getting pagetextcontent")
         const textContent = await page.getTextContent()
-        // console.log(pdfDocument._transport.commonObjs);
-        const textItems = await textContent.items.map(item => {
+        const textItems = textContent.items.map(item => {
             const fontId = item.fontName
             if (!fonts.ids.has(fontId) && fontId.startsWith('g_d0')) {
+                // according to the docs, a PDFObject has the method get(objId: number, callback?: any): any;
+                // Need to promisify the .get method, and await before returning, but this entails editing
+                // the framework. Have to find use an object watcher instead.
                 pdfDocument._transport.commonObjs.get(fontId, font => {
                     if (!fonts.ids.has(fontId)) {
                         fonts.ids.add(fontId)
                         fonts.map.set(fontId, font)
+                        countDown -= 1
+                        console.log(countDown)
                     }
-                    // console.log("fonts inside if")
                 })
             }
 
@@ -52,7 +56,6 @@ export async function getPDF(docOptions) {
                 font: fontId,
             })
         })
-        console.log("fonts out" + i.toString());
         console.log(fonts)
         pages[page.pageIndex].items = textItems
         // Verify that the number of page items for each page correspond
@@ -65,10 +68,10 @@ export async function getPDF(docOptions) {
     // fonts display nothing here cos the async function has not completed
     // console.log(fonts);
     // console.log(metadata);
-    console.log("fonts final");
-    console.log(fonts);
-    return { fonts, metadata, pages, pdfDocument };
-} 
+    // console.log("fonts final");
+    // console.log(fonts);
+        return { fonts, metadata, pages, pdfDocument };
+}
 
 // What the above function is actually doing
 export function getPDF2(filePath) {
