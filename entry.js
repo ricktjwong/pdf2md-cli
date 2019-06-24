@@ -1,6 +1,6 @@
 // Alternate entry point that makes use of process.argv instead of ink cli
 
-import { getPDF } from './debug.js';
+import { getPDF } from './pdf.js';
 import { makeTransformations, transform } from './lib/transformations.jsx';
 import "core-js/stable";
 import "regenerator-runtime/runtime";

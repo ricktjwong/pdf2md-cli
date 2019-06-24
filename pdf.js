@@ -16,7 +16,6 @@ export async function getPDF(docOptions) {
         ids: new Set(),
         map: new Map(),
     }
-    var countDown = pdfDocument.numPages
     for (let i = 1; i <= pdfDocument.numPages; i++) {
         // console.log("getting page")
         const page = await pdfDocument.getPage(i)
@@ -34,8 +33,6 @@ export async function getPDF(docOptions) {
                     if (!fonts.ids.has(fontId)) {
                         fonts.ids.add(fontId)
                         fonts.map.set(fontId, font)
-                        countDown -= 1
-                        console.log(countDown)
                     }
                 })
             }
@@ -56,7 +53,6 @@ export async function getPDF(docOptions) {
                 font: fontId,
             })
         })
-        console.log(fonts)
         pages[page.pageIndex].items = textItems
         // Verify that the number of page items for each page correspond
         // pages.forEach(element => {
