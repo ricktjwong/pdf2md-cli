@@ -23,59 +23,40 @@ export async function getPDF(docOptions) {
         const viewport = page.getViewport(scale)
         // console.log("getting pagetextcontent")
         const textContent = await page.getTextContent()
-        const textItems = textContent.items.map(item => {
-            const fontId = item.fontName
-            if (!fonts.ids.has(fontId) && fontId.startsWith('g_d0')) {
-                // according to the docs, a PDFObject has the method get(objId: number, callback?: any): any;
-                // Need to promisify the .get method, and await before returning, but this entails editing
-                // the framework. Have to find use an object watcher instead.
-                pdfDocument._transport.commonObjs.get(fontId, font => {
-                    if (!fonts.ids.has(fontId)) {
-                        fonts.ids.add(fontId)
-                        fonts.map.set(fontId, font)
-                    }
+        if (textContent) {
+            const textItems = textContent.items.map(item => {
+                const fontId = item.fontName
+                if (!fonts.ids.has(fontId) && fontId.startsWith('g_d0')) {
+                    // according to the docs, a PDFObject has the method get(objId: number, callback?: any): any;
+                    // Need to promisify the .get method, and await before returning, but this entails editing
+                    // the framework. Have to find use an object watcher instead.
+                    pdfDocument._transport.commonObjs.get(fontId, font => {
+                        if (!fonts.ids.has(fontId)) {
+                            fonts.ids.add(fontId)
+                            fonts.map.set(fontId, font)
+                        }
+                    })
+                }
+
+                const tx = pdfjs.Util.transform(
+                    viewport.transform,
+                    item.transform
+                )
+
+                const fontHeight = Math.sqrt((tx[2] * tx[2]) + (tx[3] * tx[3]));
+                const dividedHeight = item.height / fontHeight;
+                return new TextItem({
+                    x: Math.round(item.transform[4]),
+                    y: Math.round(item.transform[5]),
+                    width: Math.round(item.width),
+                    height: Math.round(dividedHeight <= 1 ? item.height : dividedHeight),
+                    text: item.str,
+                    font: fontId,
                 })
-            }
-
-            const tx = pdfjs.Util.transform(
-                viewport.transform,
-                item.transform
-            )
-
-            const fontHeight = Math.sqrt((tx[2] * tx[2]) + (tx[3] * tx[3]));
-            const dividedHeight = item.height / fontHeight;
-            return new TextItem({
-                x: Math.round(item.transform[4]),
-                y: Math.round(item.transform[5]),
-                width: Math.round(item.width),
-                height: Math.round(dividedHeight <= 1 ? item.height : dividedHeight),
-                text: item.str,
-                font: fontId,
             })
-        })
-        pages[page.pageIndex].items = textItems
-        // Verify that the number of page items for each page correspond
-        // pages.forEach(element => {
-        //     console.log(element.items.length)
-        // });
-        // Trigger the font retrieval for the page
-        page.getOperatorList()
+            pages[page.pageIndex].items = textItems
+            page.getOperatorList()
+        }
     }
-    // fonts display nothing here cos the async function has not completed
-    // console.log(fonts);
-    // console.log(metadata);
-    // console.log("fonts final");
-    // console.log(fonts);
         return { fonts, metadata, pages, pdfDocument };
-}
-
-// What the above function is actually doing
-export function getPDF2(filePath) {
-    var loadingTask = pdfjs.getDocument(filePath);
-    loadingTask.promise.then(function(pdf) {
-        const pdfDocument = pdf;
-        pdfDocument.getMetadata().then(function(metadata) {
-            console.log(metadata);
-        });
-    });
 }
