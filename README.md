@@ -6,7 +6,7 @@ This started as a CLI project, adding the elements required for the pdf2md along
 Instructions to run:
 <pre>
 $ cd [project_folder]
-$ node index.js [input folder path] [output folder path] [Specify 1 for recursive and 0 for non-recursive]
+$ node index.js --inputFolderPath=[your input folder path] --outputFolderPath=[your output folder path] --recursive=[true or false]
 </pre>
 
 Options:

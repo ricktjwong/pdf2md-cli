@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "mocha --require @babel/register test --recursive"
   },
   "author": "",
   "license": "ISC",
@@ -20,8 +20,11 @@
     "typescript": "^3.5.2"
   },
   "dependencies": {
+    "chai": "^4.2.0",
     "core-js": "^3.0.1",
     "enumify": "^1.0.4",
+    "minimist": "^1.2.0",
+    "mocha": "^6.1.4",
     "pdfjs-dist": "^2.0.943",
     "react": "^16.8.6",
     "regenerator-runtime": "^0.13.2"
