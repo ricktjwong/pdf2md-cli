@@ -5,8 +5,8 @@ This started as a bare ink CLI project, adding the elements required for the pdf
 
 Instructions to run:
 <pre>
-$ cd <project_folder>
-$ node index.js <input folder path> <output folder path> <Specify 1 for recursive and 0 for non-recursive>
+$ cd [project_folder]
+$ node index.js [input folder path] [output folder path] [Specify 1 for recursive and 0 for non-recursive]
 </pre>
 
 Options:
