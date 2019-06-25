@@ -7,8 +7,6 @@ const fs = require('fs');
 const path = require('path')
 var argv = require('minimist')(process.argv.slice(2));
 
-// node index.js --inputFolderPath=/Users/ricktjwong/rickwong/3_Projects/5_Business/govtech/pdf2md-cli/examples --outputFolderPath=./output --recursive=true
-
 if (!argv["inputFolderPath"]) {
     console.log("Please specify inputFolderPath")
 } else if (!argv["outputFolderPath"]) {
@@ -23,11 +21,55 @@ if (!argv["inputFolderPath"]) {
 }
 
 function run(folderPath, outputPath, recursive=true) {
-    var allFilePaths = getAllPdfPaths(folderPath, outputPath, recursive)
-    var allOutputPaths = allFilePaths.map(x => {
+    var outputArray = getPaths(folderPath)
+    var filePaths = outputArray[0]
+    var folderPaths = outputArray[1]
+    var allFolderPaths = folderPaths
+    if (recursive) {
+        while (allFolderPaths.length != 0) {
+            var nextFolderPaths = []
+            allFolderPaths.forEach(folderPath => {
+                outputArray = getPaths(folderPath)
+                filePaths = filePaths.concat(outputArray[0])
+                nextFolderPaths = nextFolderPaths.concat(outputArray[1])
+                folderPaths = folderPaths.concat(outputArray[1])
+            });
+            allFolderPaths = nextFolderPaths
+        }
+    }
+    var allOutputPaths = filePaths.map(x => {
         return outputPath + x.split(folderPath)[1].split('.')[0]
     })
-    allFilePaths.forEach(async function(filePath, i) {
+    console.log(filePaths)
+    console.log(folderPaths)
+    console.log(allOutputPaths)
+    allOutputPaths.forEach(outputPath => {
+        outputPath = outputPath.split('/').slice(0, -1).join('/')
+        if (!fs.existsSync(outputPath)) {
+            fs.mkdirSync(outputPath, { recursive: true })
+        }
+    })
+    createMarkdownFiles(filePaths, allOutputPaths)
+}
+
+function getPaths(folderPath) {
+    var filePaths = []
+    var folderPaths = []
+    var directoryItems = fs.readdirSync(folderPath)
+    directoryItems.forEach(directoryItem => {
+        const isDirectory = fs.lstatSync(folderPath + '/' + directoryItem).isDirectory()
+        if (isDirectory) {
+            folderPaths.push(folderPath + '/' + directoryItem)
+        } 
+        if (directoryItem.split('.').pop() == 'pdf') {
+            filePaths.push(folderPath + '/' + directoryItem)
+        }
+    });
+    return [filePaths, folderPaths]
+}
+
+function createMarkdownFiles(filePaths, allOutputPaths) {
+    filePaths.forEach(async function(filePath, i) {
         const data = fs.readFileSync(filePath)
         try {
             const {fonts, metadata, pages, pdfDocument} =  await getPDF(data)
@@ -45,42 +87,4 @@ function run(folderPath, outputPath, recursive=true) {
             console.log(err)
         }
     })
-}
-
-function getAllPdfPaths(folderPath, outputPath, recursive) {
-    var folderPaths = [folderPath]
-    var allFilePaths = []
-    while (folderPaths.length != 0) {
-        folderPaths.forEach(newFolderPath => {
-            var files = fs.readdirSync(newFolderPath)
-            outputPath = outputPath + newFolderPath.split(folderPath)[1]
-            var outputArray = getPaths(files, newFolderPath, outputPath)
-            var filePaths = outputArray[0]
-            folderPaths = outputArray[1]
-            if (!recursive) {
-                folderPaths = []
-            }
-            allFilePaths = allFilePaths.concat(filePaths)
-        });
-    }
-    return allFilePaths
-}
-
-function getPaths(files, folderPath, outputPath) {
-    var filePaths = []
-    var folderPaths = []
-    files.forEach(file => {
-        const isDirectory = fs.lstatSync(folderPath + '/' + file).isDirectory()
-        if (isDirectory) {
-            folderPaths.push(folderPath + '/' + file)
-            var newdir = outputPath + '/' + file
-            if (!fs.existsSync(newdir)) {
-                fs.mkdirSync(outputPath + '/' + file, { recursive: true })
-            }
-        }
-        if (file.split('.').pop() == 'pdf') {
-            filePaths.push(folderPath + '/' + file)
-        }
-    });
-    return [filePaths, folderPaths]
 }
