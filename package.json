@@ -23,7 +23,7 @@
     "chai": "^4.2.0",
     "core-js": "^3.0.1",
     "enumify": "^1.0.4",
-    "minimist": "^1.2.0",
+    "minimist": "^1.2.6",
     "mocha": "^6.1.4",
     "pdfjs-dist": "^2.0.943",
     "react": "^16.8.6",
