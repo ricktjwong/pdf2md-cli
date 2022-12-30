@@ -24,7 +24,7 @@
     "core-js": "^3.0.1",
     "enumify": "^1.0.4",
     "minimist": "^1.2.0",
-    "mocha": "^6.1.4",
+    "mocha": "^10.2.0",
     "pdfjs-dist": "^2.0.943",
     "react": "^16.8.6",
     "regenerator-runtime": "^0.13.2"
